@@ -1,0 +1,18 @@
+{
+  "name": "pubchem-api",
+  "version": "0.1.0",
+  "description": "A module that facilitates the use of PubChem API",
+  "main": "pubchem-api.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "pubchem",
+    "chemistry"
+  ],
+  "author": "Michal Malik",
+  "license": "MIT",
+  "dependencies": {
+    "superagent": "~1.4.0"
+  }
+}
