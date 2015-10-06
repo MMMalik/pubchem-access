@@ -1,4 +1,4 @@
 node_modules
-pubchem.komodoproject
+*.komodoproject
 gh-pages
 *~
