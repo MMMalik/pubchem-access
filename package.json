@@ -1,8 +1,8 @@
 {
-  "name": "pubchem-api",
-  "version": "0.1.0",
-  "description": "A module that facilitates the use of PubChem API",
-  "main": "pubchem-api.js",
+  "name": "pubchem-access",
+  "version": "1.0.0",
+  "description": "A module to communicate with PubChem",
+  "main": "pubchem-access.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

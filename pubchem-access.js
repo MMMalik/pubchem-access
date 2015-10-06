@@ -7,7 +7,7 @@ if (typeof exports === 'object' && typeof exports.nodeName !== 'string' && typeo
 define(function (require, exports, module) {
 
     /*
-     * A module that is built upon PubChem API.
+     * A module to communicate with PubChem.
      * Facilitates the use of PubChem API for JS environments.
      * Suitable for front-end and Node development.
      * @module pubchem-api
@@ -21,14 +21,13 @@ define(function (require, exports, module) {
     
     /**
      * Defines Find constructor.
-     * @class Find
      * @param {string} prop - param associated with passed property
      * @param {string} [optionGet] - Additional option associated with CmpdOps obj.
      */
-    var Find = function (prop, optionGet) {
+    function Find (prop, optionGet) {
         this.prop = prop;
-        this.optionGet = optionGet;
-    };
+        this.optionGet = optionGet;		 
+    }
     
     /**
      * The final callback passed by user
@@ -44,17 +43,17 @@ define(function (require, exports, module) {
      * @returns {Object} obj - object containing "find()" function
      * @returns {Object} obj.find - final function calling "execSearch()"
      */
-    Find.prototype.exec = function (url) {
-        var that = this;
+    Find.prototype.exec = function (url) {		
+		function execute (callback, dataFormat, optionF) {
+            execSearch(url, callback, {
+				prop: this.prop,
+				optionF: optionF,
+				optionGet: this.optionGet,
+				dF: dataFormat
+            });
+        }
         return {
-            find: function (callback, dataFormat, optionF) {
-                execSearch(url, callback, {
-                    prop: that.prop,
-                    optionF: optionF,
-                    optionGet: that.optionGet,
-                    dF: dataFormat
-                });
-            }
+            execute: execute.bind(this)	
         };
     };
     
@@ -73,8 +72,8 @@ define(function (require, exports, module) {
             obj.dF = "JSON";
         }        
         
-        return request
-            .get(url.append(obj.dF))
+        request
+            .get(url.appendToPubchem(obj.dF))
             .end(function (err, res) {
                 if (res.ok) {
                     // If response is status OK, then returns status = 1.
@@ -91,23 +90,28 @@ define(function (require, exports, module) {
                 } else if (res.clientError) {                    
                     // Handles client error. Returns status > 2, according to the encountered hindrance.
                     var errObj = new ClientError(res.body);
-                    callback(errObj.info, errObj.status);
-                }                
-            });
+                    callback(errObj.getInfo(), errObj.getStatus());
+                }               
+        });
     }
     
     /**
      * Defines ClientError constructor.
-     * @class ClientError
      * @param {Object} body - response body to be parsed accordingly.
      */
-    var ClientError = function (body) {
+    function ClientError (body) {
         this.messagesFromServer = ["Missing CID list", "No CID found", "Expected a property list"];
         this.responses = ["Wrong CID number.", "Compound not found.", "Invalid properties."];
         this.message = body.Fault.Message;
-        this.status = this.messagesFromServer.indexOf(this.message) + 3;
-        this.info = this.responses[this.status - 3];
-    };
+    }
+	
+	ClientError.prototype.getInfo = function () {
+		return this.responses[this.getStatus() - 3];
+	};
+	
+	ClientError.prototype.getStatus = function () {
+		return this.messagesFromServer.indexOf(this.message) + 3;
+	};
     
     /**
      * Checks if the passed parameter is a valid CAS number.
@@ -117,31 +121,33 @@ define(function (require, exports, module) {
     function checkElement (toVerify) {
 		var reg = new RegExp(/^(\d{1,8})-(\d{1,8})-(\d{1})$/);				
 		var match = toVerify.match(reg);
-		if (match === null) return false;
+		if (match === null) { return false; }
 		var part1 = match[1];
 		var part2 = match[2];
 		var checkDigit = match[3].charAt(0);
 		var sum = 0;
 		var totalLength = part1.length + part2.length;
-		for(i = 0; i < part1.length; i++) {
+		for(var i = 0; i < part1.length; i += 1) {
 			sum += part1.charAt(i) * totalLength;
-			totalLength--;
+			totalLength -= 1;
 		}
-		for(i = 0; i < part2.length; i++) {
-			sum += part2.charAt(i) * totalLength;
-			totalLength--;
+		for(var j = 0; j < part2.length; j += 1) {
+			sum += part2.charAt(j) * totalLength;
+			totalLength -= 1;
 		}
-		return (sum % 10) == checkDigit;
+		return (sum % 10) === parseInt(checkDigit, 10);
 	}
     
     /**
      * Appends a slash and a string.
-     * @param {string} toAppend - fragment to append to the string on which this method is called
+     * @param {string} toAppend - fragment to appendToPubchem to the string on which this method is called
      * @returns {string} newUrl
      */
-    String.prototype.append = function (toAppend) {
-        return this + "/" + toAppend;
-    };
+    if (!String.prototype.appendToPubchem) {
+		String.prototype.appendToPubchem = function (toAppend) {
+			return this + "/" + toAppend;
+		};
+    }
     
     /*
      * Parses the response body.
@@ -149,14 +155,20 @@ define(function (require, exports, module) {
      * @param {Object} body - response body to be parsed
      * @param {string} prop - param associated with passed property
      * @param {string} [optionGet] - option associated with "get" function
-     * @returns {string|Object} 
+     * @returns {string|Object}
      */
     function parseProperties (body, prop, optionGet) {
         if (prop === "Synonym") {
+			var allNames = body.InformationList.Information[0][prop]; 
             if (typeof optionGet === "undefined") {
-                return body.InformationList.Information[0][prop];
-            } else if (typeof optionGet === "number") {
-                return body.InformationList.Information[0][prop].slice(0, optionGet);
+                return allNames;
+			} else if (optionGet === "cas") {				
+                for (var i = 0; i < allNames.length; i += 1) {
+                    var el = allNames[i];
+                    if (checkElement(el)) { return el; }
+				}
+			} else if (typeof optionGet === "number") {
+                return optionGet > 0 ? allNames.slice(0, optionGet): "";
             }
         } else if (prop === "propertyArray") {
             return body.PropertyTable.Properties[0];   
@@ -170,32 +182,30 @@ define(function (require, exports, module) {
      * @class CmpdSpace
      * @param {string} url - base Pubchem url
      */
-    var CmpdSpace = function (url) {
+    function CmpdSpace (url) {
         // Properties that can be requested according to PubChem API.
-        this.properties = ["name", "name", "smiles", "cid", "inchi", "inchikey"];
+        var properties = ["name", "name", "smiles", "cid", "inchi", "inchikey"];
         // Slightly changed names of those properties.
-        this.alias = ["Name", "Cas", "Smiles", "Cid", "Inchi", "InchiKey"];
-        this.url = url;
-        
+        var alias = ["Name", "Cas", "Smiles", "Cid", "Inchi", "InchiKey"];
         // Generates all setters.
-        var that = this;
-        var i = 0;
-        this.properties.forEach(function (property) {            
-            that["set" + that.alias[i++]] = function (toFind) {
-                var newUrl = that.url.append(property).append(toFind);
-                return new CmpdOps(newUrl);
-            };
-        });
-    };
+		for(var i = 0; i <= properties.length; i += 1) {
+			(function (j) {				
+				this["set" + alias[j]] = function (toFind) {
+					var newUrl = url.appendToPubchem(properties[j]).appendToPubchem(toFind);
+					return new CmpdOps(newUrl);
+				};
+			}.call(this, i));
+		}
+    }
     
     /**
      * Defines CmpdOps ("Compound Operations") constructor.
      * @class CmpdOps
-     * @param {string} url - base Pubchem url with the already passed data appended to it
+     * @param {string} url - base Pubchem url with the already passed data appendToPubchemed to it
      */
     var CmpdOps = function (url) {
         // Array of properties according to PubChem API.
-        this.properties = ["IUPACName", "MolecularFormula", "MolecularWeight",
+        var properties = ["IUPACName", "MolecularFormula", "MolecularWeight",
                            "CanonicalSMILES", "IsomericSMILES", "InChI",
                            "InChIKey", "XLogP", "ExactMass",
                            "MonoisotopicMass", "TPSA", "Complexity",
@@ -208,57 +218,50 @@ define(function (require, exports, module) {
                            "FeatureAcceptorCount3D", "FeatureDonorCount3D", "FeatureAnionCount3D",
                            "FeatureCationCount3D", "FeatureRingCount3D", "FeatureHydrophobeCount3D",
                            "ConformerModelRMSD3D", "EffectiveRotorCount3D", "ConformerCount3D",
-                           "Fingerprint2D"];        
-        this.url = url;
+                           "Fingerprint2D"];
         
         // Generates all getters.
-        var that = this;
-        this.properties.forEach(function (property) {            
-            that["get" + property] = function () {
-                var newUrl = that.url.append("property").append(property);
-                return new Find(property).exec(newUrl);
-            };            
-        });
+		for(var i = 0; i <= properties.length; i += 1) {
+			(function (j) {				
+				this["get" + properties[j]] = function (toFind) {
+					var newUrl = url.appendToPubchem("property").appendToPubchem(properties[j]);
+					return new Find(properties[j]).exec(newUrl);
+				};
+			}.call(this, i));
+		}
+		// Getter for array of properties
         this.getProperties = function (toFind) {
             if (!Array.isArray(toFind)) {
                 throw new Error("Only array is accepted.");
             } else {
-                var newUrl = that.url.append("property") + "/";
+                var newUrl = url.appendToPubchem("property") + "/";
                 toFind.forEach(function (element) {
-                    if (that.properties.indexOf(element) >= 0) {
+                    if (properties.indexOf(element) >= 0) {
                         newUrl += element + ",";
                     }
                 });
                 return new Find("propertyArray").exec(newUrl);
             }
         };
+		// Getter for Cas nr
         this.getCas = function () {
-            var that = this;
-            return {
-                find: function (callback) {
-                    that.getNames()
-                        .find(function (allNames) {
-                            for (var i = 0; i < allNames.length; i++) {
-                                var el = allNames[i];
-                                var found = checkElement(el);
-                                if (found) {
-                                    callback(el);
-                                    break;
-                                }
-                            }
-                        });
-                }    
-            };
+			var newUrl = url.appendToPubchem("synonyms");
+            return new Find("Synonym", "cas").exec(newUrl);
         };
+		/**
+		 * Getter for names
+		 * @param {number} number - "undefined" for all names
+		 *							> 0 for specified number of names to display 
+		 */
         this.getNames = function (number) {
-            var newUrl = url.append("synonyms");
+            var newUrl = url.appendToPubchem("synonyms");
             return new Find("Synonym", number).exec(newUrl);
         };
     };
     
     /** Sets domain and exports. */
 	exports.domain = function (domain, method) {
-        var newUrl = baseUrl.append(domain);        
+        var newUrl = baseUrl.appendToPubchem(domain);        
         if (domain === "compound") {  
             return typeof method === undefined ? new CmpdSpace(newUrl): new CmpdSpace(newUrl, "post");
         } else {
