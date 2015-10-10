@@ -1,0 +1,91 @@
+{{#each examples}}
+<div class="panel panel-default pb-fix">
+	<div class="panel-body ">
+		<dl class="dl-horizontal dl-fix">
+			<dt>Example #{{number}}</dt>
+			<dd>{{description}}</dd>
+		</dl>
+		<p><pre class="ex-pre"><code>{{code}}</code></pre></p>
+		<button type="button" class="btn btn-sm btn-default" id="example{{number}}-btn">{{button}}</button>
+		&emsp;<span id="example{{number}}-result"> </span>	
+	</div>
+</div>
+
+{{/each}}
+<script id="examples-script">
+	requirejs(["pubchem"], function (pbc) {
+		var pubchem = pbc.domain("compound");
+		$("#example1-btn").click(function () {
+			pubchem
+				.setName("ethanol")
+				.getCas()
+				.execute(function (data) {
+					$("#example1-result").html(data);
+				});
+		});
+		$("#example2-btn").click(function () {
+			pubchem
+			.setSmiles("CCCCC=O")
+			.getIUPACName()
+			.execute(function (data) {
+				$("#example2-result").html(data);
+			});
+		});
+		$("#example3-btn").click(function () {
+			pubchem
+			.setCas("50-78-2")
+			.getProperties(["IUPACName", "MolecularWeight"])
+			.execute(function (data) {
+				$("#example3-result").html("IUPAC name: " + data.IUPACName + ", MW: " + data.MolecularWeight.toFixed(2));
+			});
+		});
+		$("#example4-btn").click(function () {
+			pubchem
+			.setCas("123-75-1")
+			.getNames(3)
+			.execute(function (data) {
+				$("#example4-result").html(data[0] + ", " + data[1] + ", " + data[2]);
+			});
+		});
+		$("#example5-btn").click(function () {
+			pubchem
+				.setName("blablabla")
+				.getIUPACName()
+				.execute(function (data, status) {
+					$("#example5-result").html(data + ", status code: " + status);
+				});
+		});
+		$("#example6-btn").click(function () {
+			pubchem
+				.setName("aspirin")
+				.getProperties(["IUPACName", "NonExisting1", "NonExisiting2"])
+				.execute(function (data, status) {
+					$("#example6-result").html(data.IUPACName + ", " + data.NonExisting1 + ", status: " + status);
+				});
+		});
+		$("#example7-btn").click(function () {
+			pubchem
+				.setName("aspirin")
+				.getProperties(["NonExisting1", "NonExisting2", "NonExisiting3"])
+				.execute(function (data, status) {
+					var output =
+						status === 1 ?
+							data.NonExisting1 + ", " + data.NonExisting2 + ", " + data.NonExisting3:
+							data + ", status: " + status;
+					$("#example7-result").html(output);
+				});
+		});
+		$("#example8-btn").click(function () {
+			pubchem
+				.setName("THF")
+				.getIUPACName()
+				.execute(function (data, status) {
+					var output =
+						status === 1 ?
+							JSON.stringify(data):
+							data + ", status: " + status;
+					$("#example8-result").html(output);
+				}, "JSON", "raw");
+		});
+	});
+</script>

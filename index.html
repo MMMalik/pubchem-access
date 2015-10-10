@@ -5,78 +5,289 @@
     <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
     <meta name="description" content="pubchem-access : JavaScript wrapper for PubChem API">
-
-    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
-
+    
+	<link rel="stylesheet" type="text/css" media="screen" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" media="screen" href="stylesheets/mycss.css">
     <title>pubchem-access</title>
   </head>
 
   <body>
-
+	
     <!-- HEADER -->
-    <div id="header_wrap" class="outer">
-        <header class="inner">
-          <a id="forkme_banner" href="https://github.com/MMMalik/pubchem-access">View on GitHub</a>
-
-          <h1 id="project_title">pubchem-access</h1>
-          <h2 id="project_tagline">JavaScript wrapper for PubChem API</h2>
-		  
-        </header>
-    </div>
+    <div class="jumbo-fix">
+		<div class="container">
+			<div class="row">
+				<div class="col-xs-10 col-xs-offset-1">
+					<a role="button" id="forkme_banner" class="btn" href="https://github.com/MMMalik/pubchem-access">View on GitHub</a>
+					<div class="page-header ph-fix">
+						<h1>pubchem-access <br/>
+							<small>
+								a JavaScript wrapper for PubChem API <br/>						
+							</small>
+						</h1>
+					</div>		  
+				</div>
+			</div>
+		</div>
+	</div>
 
     <!-- MAIN CONTENT -->
-    <div id="main_content_wrap" class="outer">
-      <section id="main_content" class="inner">
-        <h3>
+	<div class="container main-content">
+	<div class="row">
+	<div class="col-xs-10 col-xs-offset-1">
+		<nav>
+			<ul class="pager">
+				<li><a href="#about">About</a></li>
+				<li><a href="#getting">Getting started</a></li>
+				<li><a href="#request">Create request</a></li>
+				<li><a href="#examples-head">Learn by examples</a></li>
+				<li><a href="#license">License</a></li>
+				<li><a href="#support">Support</a></li>
+			</ul>
+		</nav>
+		<h3 id="about">
 			<a id="about" class="anchor" href="#about" aria-hidden="true">
-				<span class="octicon octicon-link"></span>
+			<span class="octicon octicon-link"></span>
 			</a>About
 		</h3>
-
-		<p>Pubchem-access is a module enabling communication with <a href="https://pubchem.ncbi.nlm.nih.gov/">Pubchem</a> databases.</p>
-
-		<h3>
+		
+		<p>
+			Pubchem-access is a light-weight module enabling communication with <a href="https://pubchem.ncbi.nlm.nih.gov/">PubChem</a> database in JavaScript.
+			In the browser, it is designed to work with an AMD module loader, e.g. <a href="http://requirejs.org/">require.js</a> and has
+			Ajax API <a href="https://visionmedia.github.io/superagent/">SuperAgent</a> as its sole dependency.
+		</p>
+		
+		<hr/>
+		
+		<h3 id="getting">
 			<a id="designer-templates" class="anchor" href="#designer-templates" aria-hidden="true">
 				<span class="octicon octicon-link"></span>
 			</a>Getting started
 		</h3>
-
-		<p><code>...</code></p>
+		<strong><p>Download pubchem-access</p></strong>
+		<p>
+			<ul>
+				<li>Copy pubchem-access.js
+					from my <a href="https://github.com/MMMalik/pubchem-access">Git</a> repo to your directory with third-parties.
+					For the sake of this tutorial, directory layout looks like this:
+					<p><pre><code>index.html
+javascripts/
+  main.js
+  config.js
+  require.min.js
+  vendors/
+    pubchem-access.js
+    jquery.min.js
+</code></pre></p>
+				</li>
+			</ul>
+		</p>
 		
-		<h3>
+		<strong><p>Configure require.js</p></strong>
+		<p>
+			<ul>
+				<li>
+					Download <a href="http://requirejs.org/">require.js</a> and put it in javascsripts directory.
+				</li>
+				<li>
+					Reference require.js on index.html:
+					<code>&lt;script data-main='javascripts/main' src='javascripts/require.min.js'&gt;&lt;/script&gt;</code>
+					Better load all of your remaining JavaScript with require.js and keep it out of the html.
+				</li>
+				<li>
+					Copy the following code to main.js:
+					<p><pre><code>requirejs(["config"], function(config) {
+  requirejs(["jquery", "pubchem"], function ($, pbc) {    
+    // will be updated later
+  });
+});</code></pre></p>
+				</li>
+				<li>
+					Copy the following code to config.js:
+					<p><pre><code>requirejs.config({
+  baseUrl: 'javascripts/vendors',
+  paths: {
+    jquery: 'jquery.min',
+    superagent: "https://cdnjs.cloudflare.com/ajax/libs/superagent/1.2.0/superagent",
+    pubchem: "pubchem-access"
+  }
+});
+</code></pre></p>
+				</li>
+				<li>
+					Download <a href="https://jquery.com/">jQuery</a> to javascsripts/vendors directory.
+					It is not required by pubchem-access, but is necessary for the sake of this tutorial.
+				</li>
+				<li>
+					<a href="https://visionmedia.github.io/superagent/">SuperAgent</a> may be referenced from
+					<a href="http://cdnjs.com/libraries/superagent">cdnjs</a> (as in this tutorial).
+					Alternatively, download a browser version and put it into vendors directory.
+					This is a bit tricky, since browsers are not its primary environment (but Node is).
+				</li>
+			</ul>
+		</p>
+		
+		<hr/>
+		
+		<h3 id="request">
+			<a id="designer-templates" class="anchor" href="#designer-templates" aria-hidden="true">
+				<span class="octicon octicon-link"></span>
+			</a>Create a request
+		</h3>
+		
+		<strong><p>Specify the domain</p></strong>
+		<p>
+			<ul>
+				<li>
+					At this moment, only <code>"compound"</code> is available. Here is updated main.js:
+					<p><pre><code>requirejs(["config"], function(config) {
+  requirejs(["jquery", "pubchem"], function ($, pbc) {
+    var pubchem = pbc.domain("compound");
+    // will be updated later
+  });
+});</code></pre></p>		
+				</li>
+			</ul>
+		</p>
+		
+		<strong><p>Invoke setter</p></strong>
+		<p>
+			<ul>
+				<li>
+					A request can be initiated by invoking a setter method on <code>pubchem</code> object, like this:
+					<code>pubchem.setName("your-name")</code>. It takes a string as an argument. For now, the following setters are available:
+					<ul class="list-unstyled">
+						<li><code>.setName("your-name")</code></li>
+						<li><code>.setCas("your-cas")</code></li>
+						<li><code>.setSmiles("your-smiles")</code></li>
+						<li><code>.setCid("your-cid")</code></li>
+						<li><code>.setInchi("your-inchi")</code></li>
+						<li><code>.setInchiKey("your-inchikey")</code></li>						
+					</ul>
+				</li>
+			</ul>
+		<p>
+		
+		<strong><p>Invoke getter</p></strong>
+		<p>
+			<ul>
+				<li>
+					Next, invoke a getter method. For now, the following getters are available:
+					<ul>
+						<li><code>.getNames(number)</code> - gets all names of the specified compound and limits the results to the given number.
+						If number is unspecified, or number <= 0, all available names are returned.</li>
+						<li><code>.getCas()</code> - accepts no arguments. Gets all names of the specified compound, looks only for CAS.</li>
+						<li><code>.get"Property"()</code> - accepts no arguments. "Property" is one of the available properties
+						(they are quite descriptive, but consult
+						<a href="https://pubchem.ncbi.nlm.nih.gov/pug_rest/PUG_REST.html">PubChem API</a> for their detailed meaning):
+							<p id="properties"></p>
+							For example: <code>.getIUPACName()</code> or <code>.getExactMass()</code>.</li>
+						<li><code>.getProperties(array)</code> - finds all specified properties in one call. Takes array of properties as argument,
+						for example: <code>.getProperties(["IUPACName", "MolecularFormula", "ExactMass"])</code></li>
+					</ul>
+				</li>
+			</ul>
+		<p>
+		
+		<strong><p>Invoke execute()</p></strong>
+		<p>
+			<ul>
+				<li>
+					Finally, invoking <code>.execute(callback, dataFormat, option)</code> function ends the chain.
+					<ul>
+						<li>Callback(data, status) - function that accepts two arguments:
+							<ul>
+								<li>
+									data - type depends on used getter: string for getCas and getProperty, array for getNames and object for
+									getProperties (with names of properties as keys).
+								</li>
+								<li>
+									status - optional; number with an appropriate status:
+									<ul>
+										<li>1 - response OK</li>
+										<li>2 - server error</li>
+										<li>3 - wrong CID number</li>
+										<li>4 - compound not found</li>
+										<li>5 - expected a property list</li>
+									</ul>
+								</li>
+							</ul>
+						</li>
+						<li>
+							dataFormat - optional; string with info about requested data format. Defaults to "JSON". Other possible formats, as specified by PubChem, are:
+							"XML", "CSV", "TXT" and some other. Pubchem-access supports only parsing of JSON, so other formats are returned as "raw" files.							
+						</li>
+						<li>
+							option - optional; pass string value "raw", if you like to obtain raw JSON data (without parsing).
+						</li>
+					</ul>
+				</li>
+				<li>That's all you need to execute your request. Here is the updated main.js:
+					<p><pre><code>requirejs(["config"], function(config) {
+  requirejs(["jquery", "pubchem"], function ($, pbc) {
+    var pubchem = pbc.domain("compound");
+    $(function () {
+      pubchem
+        .setName("acetic acid")
+        .getExactMass()
+        .execute(function (data, status) {
+          $("#content").html(data + ", status: " + status);
+        });
+    });
+});</code></pre></p>	
+				</li>
+			</ul>
+		</p>
+		
+		<hr/>
+		
+		<h3 id="examples-head">
 			<a id="creating-pages-manually" class="anchor" href="#creating-pages-manually" aria-hidden="true">
 				<span class="octicon octicon-link"></span>
 			</a>Learn by examples
 		</h3>
-
-		<p>...</p>
 		
-		<h3>
+		<p>
+			The following examples use <a href="https://jquery.com/">jQuery</a>. They assume, that you have already specified domain, e.g.
+			<code>var pubchem = pbc.domain("compound");</code>, where <code>pbc</code> object is obtained from AMD loader (see Create request).
+		</p>
+		
+		<div id="examples"></div>
+		
+		<hr/>
+		
+		<h3 id="license">
 			<a id="support-or-contact" class="anchor" href="#support-or-contact" aria-hidden="true">
 				<span class="octicon octicon-link"></span>
 			</a>License
 		</h3>
-
+		
 		<p>MIT</p>
-
-		<h3>
+		
+		<hr/>
+		
+		<h3 id="support">
 			<a id="support-or-contact" class="anchor" href="#support-or-contact" aria-hidden="true">
 				<span class="octicon octicon-link"></span>
 			</a>Support or Contact
 		</h3>
 
-		<p>Having trouble with pubchem-access? Feel free to contact <a href="https://github.com/MMMalik">me</a>.</p>
-      </section>
-    </div>
-
+		<p>Having trouble with pubchem-access? Feel free to contact me: michalmmalik@gmail</a>.</p>
+     
+	</div>
+		</div>
+	</div>
     <!-- FOOTER  -->
-    <div id="footer_wrap" class="outer">
-      <footer class="inner">
-        <p class="copyright">pubchem-access maintained by <a href="https://github.com/MMMalik">Michał Malik</a></p>
-        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
-      </footer>
-    </div>
-
+    <div class="footer">
+		<div class="container">
+			<div class="row">
+				<div class="col-xs-10 col-xs-offset-1">
+					<p class="copyright"><strong>pubchem-access</strong> maintained by <a class="link-fix" href="https://github.com/MMMalik">Michał Malik</a></p>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script data-main="javascripts/main" src="javascripts/require.min.js"></script>
     <script type="text/javascript">
         var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
         document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
