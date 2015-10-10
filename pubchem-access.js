@@ -1,20 +1,21 @@
-if (typeof exports === 'object' && typeof exports.nodeName !== 'string' && typeof define !== 'function') {
-    var define = function (factory) {
-        factory(require, exports, module);
-    };
-}
-
-define(function (require, exports, module) {
-
+(function(root, factory) {
+	if (typeof define === "function" && define.amd) {
+		define(["superagent"], function(a0) {
+            return factory(a0);
+        });
+    } else if (typeof exports === "object") {
+        module.exports = factory(require("superagent"));
+    } else {
+        factory(request);
+    }
+})(this, function(request) {
+	"use strict";
     /*
      * A module to communicate with PubChem.
      * Facilitates the use of PubChem API for JS environments.
      * Suitable for front-end and Node development.
      * @module pubchem-api
      */
-
-    // Dependencies
-	var request = require("superagent");
     
     // Base of the Pubchem API
     var baseUrl = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
@@ -101,7 +102,7 @@ define(function (require, exports, module) {
      */
     function ClientError (body) {
         this.messagesFromServer = ["Missing CID list", "No CID found", "Expected a property list"];
-        this.responses = ["Wrong CID number.", "Compound not found.", "Invalid properties."];
+        this.responses = ["wrong CID number", "compound not found", "expected a property list"];
         this.message = body.Fault.Message;
     }
 	
@@ -119,14 +120,12 @@ define(function (require, exports, module) {
      * @param {string} toVerify - input to verify
      */
     function checkElement (toVerify) {
-		var reg = new RegExp(/^(\d{1,8})-(\d{1,8})-(\d{1})$/);				
-		var match = toVerify.match(reg);
+		var reg = new RegExp(/^(\d{1,8})-(\d{1,8})-(\d{1})$/), match = toVerify.match(reg);
 		if (match === null) { return false; }
-		var part1 = match[1];
-		var part2 = match[2];
-		var checkDigit = match[3].charAt(0);
-		var sum = 0;
-		var totalLength = part1.length + part2.length;
+		var part1 = match[1], part2 = match[2],
+			checkDigit = match[3].charAt(0),
+			sum = 0,
+			totalLength = part1.length + part2.length;
 		for(var i = 0; i < part1.length; i += 1) {
 			sum += part1.charAt(i) * totalLength;
 			totalLength -= 1;
@@ -157,7 +156,7 @@ define(function (require, exports, module) {
      * @param {string} [optionGet] - option associated with "get" function
      * @returns {string|Object}
      */
-    function parseProperties (body, prop, optionGet) {
+    function parseProperties (body, prop, optionGet) {		
         if (prop === "Synonym") {
 			var allNames = body.InformationList.Information[0][prop]; 
             if (typeof optionGet === "undefined") {
@@ -168,7 +167,11 @@ define(function (require, exports, module) {
                     if (checkElement(el)) { return el; }
 				}
 			} else if (typeof optionGet === "number") {
-                return optionGet > 0 ? allNames.slice(0, optionGet): "";
+                return optionGet > 0 ?
+					allNames.slice(0, optionGet).map(function (element) {
+						return element.toLowerCase();
+					}):
+					"";
             }
         } else if (prop === "propertyArray") {
             return body.PropertyTable.Properties[0];   
@@ -259,13 +262,16 @@ define(function (require, exports, module) {
         };
     };
     
-    /** Sets domain and exports. */
-	exports.domain = function (domain, method) {
-        var newUrl = baseUrl.appendToPubchem(domain);        
-        if (domain === "compound") {  
-            return typeof method === undefined ? new CmpdSpace(newUrl): new CmpdSpace(newUrl, "post");
-        } else {
-            throw new Error("Unknown domain.");
-        }
-    };
+    /** Sets domain. */
+	var pubchem = {
+		domain: function (domain, method) {
+			var newUrl = baseUrl.appendToPubchem(domain);        
+			if (domain === "compound") {  
+				return typeof method === undefined ? new CmpdSpace(newUrl): new CmpdSpace(newUrl, "post");
+			} else {
+				throw new Error("Unknown domain.");
+			}
+		}
+	};
+	return pubchem;
 });
