@@ -1,18 +1,26 @@
 {
   "name": "pubchem-access",
   "version": "1.0.0",
-  "description": "A module to communicate with PubChem",
+  "description": "A module enabling communication with PubChem in JS",
   "main": "pubchem-access.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "make test"
   },
   "keywords": [
     "pubchem",
     "chemistry"
   ],
-  "author": "Michal Malik",
+  "author": {
+    "name": "Michal Malik",
+    "email": "michalmmalik@gmail.com"
+  },
   "license": "MIT",
   "dependencies": {
     "superagent": "~1.4.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MMMalik/pubchem-access"
+  },
+  "readmeFilename": "README.md"
 }
