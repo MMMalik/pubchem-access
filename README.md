@@ -27,7 +27,8 @@ pubchem
 ```javascript
 /*
  * First, configure require.js.
- * jQuery is NOT a dependency in pubchem-acccess, just a utility for the sake of this example.
+ * jQuery is NOT a dependency in pubchem-acccess,
+ * just a utility for the sake of this example.
  */
 requirejs(["config"], function(config) {
   requirejs(["jquery", "pubchem"], function ($, pbc) {
