@@ -33,7 +33,7 @@ define([], function () {
 				button: "Get properties",
 				code: "$(\"#example3-btn\").click(function () {\n" +
 					  "  pubchem\n" +
-					  "    .setCas(\"246047-72-3\")\n" +
+					  "    .setCas(\"50-78-2\")\n" +
 					  "    .getProperties([\"IUPACName\", \"MolecularWeight\"])\n" +
 					  "    .execute(function (data) {\n" +
 					  "      $(\"#example3-result\").html(\n" + 
